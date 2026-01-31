@@ -105,17 +105,23 @@ def ggplot_map(data, title="Map", output_file="map.png"):
     ggplot2.ggsave(output_file, plot=pp, width=10, height=8, dpi=300)
     print("Done.")
 
-def tmap_map(data, title="Map", output_file="map.png"):
+def ggplot_map(data, col_name=None, title="Map", color="lightblue", edge_color="black", 
+               add_scale=True, add_north=True, output_file="map.jpg"):
     """
-    Create a thematic map using tmap.
+    Create a static publication-quality vector map using ggplot2.
     
     Args:
         data: GeoPandas DataFrame or path to vector file.
+        col_name (str): Column name to use for fill color (choropleth). If None, uses fixed 'color'.
         title (str): Map title.
-        output_file (str): Path to save the output image.
+        color (str): Fill color if col_name is None.
+        edge_color (str): Border color.
+        add_scale (bool): Add scale bar.
+        add_north (bool): Add north arrow.
+        output_file (str): Path to save output (e.g., .jpg, .png).
     """
     if not HAS_RPY2:
-        print("rpy2 is required for this function.")
+        print("rpy2 is required.")
         return
 
     if isinstance(data, str):
@@ -127,17 +133,75 @@ def tmap_map(data, title="Map", output_file="map.png"):
         print("Unsupported data type.")
         return
 
+    ggplot2 = importr('ggplot2')
+    ggspatial = importr('ggspatial')
+    
+    # Base Plot
+    pp = ggplot2.ggplot(r_data)
+    
+    # Geometry
+    if col_name:
+        # Choropleth
+        pp += ggplot2.geom_sf(ggplot2.aes_string(fill=col_name), color=edge_color, size=0.2) + \
+              ggplot2.scale_fill_viridis_c() # Default to viridis for ease
+    else:
+        # Single Color
+        pp += ggplot2.geom_sf(fill=color, color=edge_color, size=0.2)
+        
+    # Layout and Labels
+    pp += ggplot2.ggtitle(title) + \
+          ggplot2.theme_bw() + \
+          ggplot2.labs(x="Longitude", y="Latitude")
+          
+    if add_scale:
+        pp += ggspatial.annotation_scale(location="bl", width_hint=0.5)
+        
+    if add_north:
+        pp += ggspatial.annotation_north_arrow(location="tl", which_north="true", 
+                                          style=ggspatial.north_arrow_fancy_orienteering)
+
+    print(f"Saving map to {output_file}...")
+    ggplot2.ggsave(output_file, plot=pp, width=10, height=8, dpi=300)
+    print("Done.")
+
+def tmap_map(data, col_name=None, title="Map", palette="Blues", style="white", output_file="map.jpg"):
+    """
+    Create a thematic map using tmap.
+    
+    Args:
+        data: GeoPandas DataFrame or path.
+        col_name (str): Column to visualize.
+        title (str): Map title.
+        palette (str): Color palette (e.g., "Blues", "RdYlGn").
+        style (str): tmap style (e.g., "white", "classic", "cobalt").
+        output_file (str): Output filename.
+    """
+    if not HAS_RPY2: return
+
+    if isinstance(data, str):
+        sf = importr('sf')
+        r_data = sf.read_sf(data)
+    elif isinstance(data, gpd.GeoDataFrame):
+        r_data = gdf_to_r_sf(data)
+    else:
+        return
+
     tmap = importr('tmap')
     
-    # tmap_mode("plot")
     tmap.tmap_mode("plot")
+    tmap.tm_style(style)
     
-    # tm_shape(data) + tm_polygons() + tm_layout(...)
-    tm = tmap.tm_shape(r_data) + \
-         tmap.tm_polygons(col="blue", alpha=0.5) + \
-         tmap.tm_layout(title=title, frame=True) + \
-         tmap.tm_scale_bar(position=robjects.StrVector(["left", "bottom"])) + \
-         tmap.tm_compass(position=robjects.StrVector(["right", "top"]))
+    # Build map
+    tm = tmap.tm_shape(r_data)
+    
+    if col_name:
+        tm += tmap.tm_polygons(col=col_name, palette=palette, title=col_name)
+    else:
+        tm += tmap.tm_polygons(col="blue", alpha=0.5)
+        
+    tm += tmap.tm_layout(title=title, frame=True, legend_position=robjects.StrVector(["right", "bottom"])) + \
+          tmap.tm_scale_bar(position=robjects.StrVector(["left", "bottom"])) + \
+          tmap.tm_compass(position=robjects.StrVector(["right", "top"]))
 
     print(f"Saving map to {output_file}...")
     tmap.tmap_save(tm, filename=output_file, width=10, height=8, dpi=300)

@@ -47,3 +47,5 @@ gas.graphics.tmap_map(
         - install_r_packages
         - ggplot_map
         - tmap_map
+        - ggplot_raster_map
+        - tmap_raster_map
