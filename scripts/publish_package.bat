@@ -1,4 +1,6 @@
-@echo off
+echo Cleaning previous builds...
+if exist dist rmdir /s /q dist
+
 echo Building package...
 python -m build
 if %errorlevel% neq 0 exit /b %errorlevel%
