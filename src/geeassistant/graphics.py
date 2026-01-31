@@ -142,3 +142,72 @@ def tmap_map(data, title="Map", output_file="map.png"):
     print(f"Saving map to {output_file}...")
     tmap.tmap_save(tm, filename=output_file, width=10, height=8, dpi=300)
     print("Done.")
+
+def ggplot_raster_map(raster_path, title="Raster Map", output_file="map.png"):
+    """
+    Map a raster file using R's terra and tidyterra/ggplot2.
+    """
+    if not HAS_RPY2:
+        print("rpy2 is required.")
+        return
+
+    # Check for terra
+    if not robjects.r.require('terra')[0]:
+        print("R package 'terra' is missing.")
+        return
+        
+    terra = importr('terra')
+    ggplot2 = importr('ggplot2')
+    # tidyterra is excellent for ggplot + terra, but might not be standard. 
+    # Let's try standard plotting or just terra's plot if tidyterra missing? 
+    # Actually, converting terra to df for ggplot is standard but slow. 
+    # Let's verify if user has 'tidyterra' or use 'gplot' from rasterVis?
+    # For simplicity and robustness without too many dependencies, we might use tmap for rasters as it handles them natively well.
+    # But user asked for ggplot2 example.
+    
+    # We will assume 'terra' produces a SpatRaster.
+    # To plot in ggplot effectively without extra packages, we sample or convert.
+    # Let's use tmap instead as fallback if valid, but try to implement a basic ggplot raster approach.
+    
+    print("Reading raster in R...")
+    r_raster = terra.rast(raster_path)
+    
+    # Simple conversion to dataframe for ggplot (warning: heavy for large rasters)
+    # R: df <- as.data.frame(r_raster, xy=TRUE)
+    r_df = terra.as_data_frame(r_raster, xy=True)
+    
+    # Column names usually x, y, and the band name (e.g. 'NDVI')
+    # We assume 3rd col is value.
+    
+    pp = ggplot2.ggplot(r_df, ggplot2.aes_string(x='x', y='y', fill='NDVI')) + \
+         ggplot2.geom_raster() + \
+         ggplot2.scale_fill_viridis_c() + \
+         ggplot2.coord_fixed() + \
+         ggplot2.ggtitle(title) + \
+         ggplot2.theme_minimal()
+         
+    print(f"Saving raster map to {output_file}...")
+    ggplot2.ggsave(output_file, plot=pp, width=10, height=8, dpi=300)
+
+def tmap_raster_map(raster_path, title="Raster Map", output_file="map.png"):
+    """
+    Map a raster using tmap.
+    """
+    if not HAS_RPY2: return
+
+    if not robjects.r.require('terra')[0]:
+        print("R package 'terra' missing.")
+        return
+        
+    tmap = importr('tmap')
+    terra = importr('terra')
+    
+    r_raster = terra.rast(raster_path)
+    tmap.tmap_mode("plot")
+    
+    tm = tmap.tm_shape(r_raster) + \
+         tmap.tm_raster(title="NDVI", style="cont", palette="RdYlGn") + \
+         tmap.tm_layout(title=title, frame=True)
+         
+    tmap.tmap_save(tm, filename=output_file, width=10, height=8, dpi=300)
+

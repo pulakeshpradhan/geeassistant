@@ -38,6 +38,7 @@ nav:
       - Indices: api/indices.md
       - Utils: api/utils.md
       - Graphics (R): api/graphics.md
+      - Workflows: api/workflows.md
 
 markdown_extensions:
   - admonition
