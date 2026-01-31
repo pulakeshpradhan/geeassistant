@@ -1,8 +1,8 @@
 import ee
-import geeassistant as gea
-from geeassistant.workflows import get_fao_gaul
+import geeassist as gas
+from geeassist.workflows import get_fao_gaul
 
-gea.init()
+gas.init()
 
 # Get geometry for Kolkata
 kolkata_geom = get_fao_gaul("Kolkata", level=2)

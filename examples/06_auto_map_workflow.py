@@ -1,7 +1,7 @@
-import geeassistant as gea
-from geeassistant.workflows import auto_process_and_map
+import geeassist as gas
+from geeassist.workflows import auto_process_and_map
 
-gea.init()
+gas.init()
 
 # Completely automated workflow
 # 1. Finds 'Kolkata' in FAO GAUL
