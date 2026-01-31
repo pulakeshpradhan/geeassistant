@@ -37,6 +37,7 @@ nav:
       - Core: api/core.md
       - Indices: api/indices.md
       - Utils: api/utils.md
+      - Graphics (R): api/graphics.md
 
 markdown_extensions:
   - admonition

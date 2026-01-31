@@ -22,7 +22,9 @@ dependencies = [
     "earthengine-api>=0.1.300",
     "geemap>=0.20.0",
     "pandas",
-    "matplotlib"
+    "matplotlib",
+    "rpy2",
+    "geopandas"
 ]
 
 [project.urls]
